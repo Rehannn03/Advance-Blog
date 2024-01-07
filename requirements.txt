@@ -1,0 +1,17 @@
+django
+pillow
+pandas
+matplotlib
+numpy
+django-rest-framework
+transformers
+tensorflow
+seaborn
+django-cors-headers
+djangorestframework-simplejwt
+scikit-learn
+tqdm
+django-oauth-toolkit
+spacy
+requests
+nltk
