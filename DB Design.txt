@@ -1,0 +1,39 @@
+Profile
+    user=foreign key to User
+    name=charfield
+    age=int
+    mobile=int
+    bio=Text
+    profile pic = img
+    created_at
+    interests=many to many =>  interests
+    follows=many to many => self,related_name='followed_by',symmetric=False
+
+
+Blog
+    title=charfield
+    body=Text
+    image=img
+    user= foreign key to User
+    category= foreign key  => Category
+    created_at 
+    updated_at
+    published Boolean field True if published else False for in Draft
+    embedding Text
+    summary
+    tags_for_seo
+
+Category
+    name:charfield unique
+
+
+Favourite
+    blog: foreign key => Blog
+    user: foreign key => User
+
+Draft
+    blog: foreign key => Blog
+    user: foreign key => User
+
+
+
