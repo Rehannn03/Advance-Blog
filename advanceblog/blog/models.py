@@ -90,6 +90,13 @@ class Draft(models.Model):
     def __str__(self) -> str:
         return self.user.username
     
+class Comment(models.Model):
+    text=models.CharField(max_length=500,blank=True,null=True)
+    blog=models.ForeignKey(Blog,on_delete=models.CASCADE)
 
 
+# class Tag(models.Model):
+#     name=models.CharField(max_length=50,deafult='#lifestyle')
 
+#     def __str__(self) -> str:
+#         return self.name
