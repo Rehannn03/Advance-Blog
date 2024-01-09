@@ -14,10 +14,25 @@ def show_all_profiles(request):
     if request.method=='GET':
         profiles=Profile.objects.all()
         print(json.dumps(list(profiles.values('id','name'))))
-        profile_serializer=ProfileSerializer(profiles,many=True)
+        profile_serializer=AllProfileSerializer(profiles,many=True)
         data=profile_serializer.data
         return JsonResponse(
             data=data,
             safe=False,
             status=status.HTTP_200_OK
         )
+
+@api_view(['GET'])
+@csrf_exempt
+def show_profile(request,id):
+    if request.method=='GET':
+        profile=Profile.objects.filter(id=id).first()
+        profile_serlizer=ProfileSerializer(profile)
+        data=profile_serlizer.data
+        print(data)
+        return JsonResponse(
+            data=data,
+            safe=False,
+            status=status.HTTP_200_OK
+        )
+

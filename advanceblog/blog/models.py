@@ -20,6 +20,10 @@ class Profile(models.Model):
         blank=True
 
     )
+    profile_pic = models.ImageField(
+        upload_to ='profilepics/',
+        default='default_profile_pic.jpg'
+        )
 
     def __str__(self) -> str:
         return self.user.username
