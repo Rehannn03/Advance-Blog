@@ -16,7 +16,8 @@ class Profile(models.Model):
     follows=models.ManyToManyField(
         'self',
         related_name='followed_by',
-        symmetrical=False
+        symmetrical=False,
+        blank=True
 
     )
 
