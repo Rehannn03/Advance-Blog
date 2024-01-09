@@ -27,6 +27,8 @@ def show_all_profiles(request):
 def show_profile(request,id):
     if request.method=='GET':
         profile=Profile.objects.filter(id=id).first()
+        print(profile.__dict__)
+        print(profile)
         profile_serlizer=ProfileSerializer(profile)
         data=profile_serlizer.data
         print(data)

@@ -56,7 +56,8 @@ class Blog(models.Model):
     body=models.TextField()
     likes=models.ManyToManyField(
 
-        Profile
+        Profile,
+        blank=True
     )
     # image=img
     user=models.ForeignKey(User,
@@ -70,9 +71,14 @@ class Blog(models.Model):
     published=models.BooleanField(default=False)
     # True if published else False for in Draft
     embedding=models.TextField()
-    summary=models.TextField()
+    summary=models.TextField(null=True,blank=True)
     tags_for_seo=models.CharField(max_length=200,blank=True,null=True)
-
+    blog_pic = models.ImageField(
+    upload_to ='blog_pics/',
+        # default='default_profile_pic.jpg',
+        null=True,
+        blank=True
+        )
 
     def __str__(self) -> str:
         return f"{self.user.username}  ||  {self.user.title[:10]}"
