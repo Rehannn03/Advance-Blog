@@ -10,7 +10,7 @@ class Profile(models.Model):
     name=models.CharField(max_length=250,null=False,blank=False)
     age=models.CharField(max_length=4,blank=True,null=True)
     mobile=models.CharField(max_length=20,null=True,blank=True)
-    bio=models.TextField()
+    bio=models.TextField(null=True,blank=True)
     # profile_pic=models.ImageField()
     created_at=models.DateField(auto_now_add=True)
     follows=models.ManyToManyField(
@@ -81,7 +81,7 @@ class Blog(models.Model):
         )
 
     def __str__(self) -> str:
-        return f"{self.user.username}  ||  {self.user.title[:10]}"
+        return f"{self.user.username}  ||  {self.title[:100]}"
     
     def total_likes(self):
         return str(self.likes.count())

@@ -109,10 +109,14 @@ class ProfileSerializer(serializers.ModelSerializer):
     # for the number of blogs the user has
     def get_no_of_blogs(self,profile):
         # print((profile.blog_set.count()))
-        return profile.blog_set.count()
+        print("===========",profile)
+        blog_count=Blog.objects.filter(user=profile.user,published=True).count()
+        return blog_count
     
     def get_following(self,profile):
-        return [{'id':following.id,'username':following.user.username } for following in profile.follows.all()][:10]
+        return [
+            {'id':following.id,'username':following.user.username }
+              for following in profile.follows.all()][:10]
     
     def get_followers(self,profile):
         return [
@@ -123,10 +127,8 @@ class ProfileSerializer(serializers.ModelSerializer):
     
     def get_blogs(self,profile):
         return list(
-            profile.blog_set.all().order_by('-created_at').values('id','title','summary')
+            profile.user.blog_set.all().values('id','title','summary')
         )
-
-
 
 
 
@@ -136,8 +138,11 @@ class CategorySerializer(serializers.ModelSerializer):
         fields='__all__'
 
 class BlogSerializer(serializers.ModelSerializer):
+    user = UserSerializer(read_only=True)
+    total_likes=serializers.SerializerMethodField()
+    likes=serializers.SerializerMethodField()
     class Meta:
-        model=Category
+        model=Blog
         fields=[
             'title',
             'body',
@@ -147,9 +152,20 @@ class BlogSerializer(serializers.ModelSerializer):
             'created_at',
             'updated_at',
             'published',
-            'summary',
-            'tags_for_seo'
+            # 'summary',
+            'tags_for_seo',
+            'total_likes'
         ]
+        # fields='__all__'
+        depth=1
 
+    def get_total_likes(self,blog):
+        return blog.likes.count()
+    
+    def get_likes(self,blog):
+        return [
+            {'user_id':liker.id,'user_name':liker.user.username} for liker in blog.likes.all()
+        ][:5]
+    
 
         

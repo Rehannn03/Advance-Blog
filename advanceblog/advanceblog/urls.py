@@ -27,6 +27,17 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('showprofiles',show_all_profiles,name='showprofiles'),
     path('showprofile/<int:id>',show_profile,name='show_profile'),
+    path('add_blog',add_blog,name='add_blog'),
+    path('show_categories',show_categories,name='show_categories'),
+    path('show_blog/<int:id>',show_blog,name='show_blog'),
+
+
+
+
+    path('login',login_user,name='login_user'),
+    path('home',home,name='home'),
+
+
 ]
 
 if settings.DEBUG:
