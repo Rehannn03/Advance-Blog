@@ -12,6 +12,10 @@ from django.contrib.auth.models import User
 from .apps import *
 from django.contrib.auth import authenticate
 from rest_framework_simplejwt.tokens import RefreshToken,AccessToken
+import numpy as np
+import re
+from pandas import *
+from sklearn.metrics.pairwise import cosine_similarity
 # Create your views here.
 
 def give_embedding(text):
@@ -21,9 +25,46 @@ def give_embedding(text):
     embedding=BlogConfig.embedding_model.encode(text)
     return f"{embedding}"
 
+def convert_to_numpy(string_embedding):
+    return np.array(
+        re.sub(" +"," ",(re.sub("[\[\]]"," ",string_embedding))).split(),
+        dtype=float
+        )
+
+def recommend(target_embedding,query_dict):
+    similar_blog_df=read_json(query_dict)
+    similar_blog_df['similarity']=similar_blog_df.embedding.apply(
+        lambda x :cosine_similarity(
+            [target_embedding],
+            [np.array(
+            re.sub(" +"," ",(re.sub("[\[\]]"," ",x))).split(),
+        dtype=float
+        )]
+        )[0][0]
+        )
+    similar_blog_df.sort_values('similarity',inplace=True,ascending=False)
+    return list(similar_blog_df.id)[1:]
+
+
+def recommend_blogs(blog):
+    target=blog.__dict__['embedding']
+    target_embedding=convert_to_numpy(target)
+    print(type(target_embedding))
+
+    similar_blogs=json.dumps(
+        list(
+            Blog.objects.filter(category=blog.category).values('id','embedding')
+            )
+        )
+    # print(similar_blogs)
+    
+    return recommend(target_embedding,similar_blogs)
+
+    
 
 
 @api_view(['GET'])
+@permission_classes([IsAuthenticated])
 @csrf_exempt
 def show_all_profiles(request):
     if request.method=='GET':
@@ -38,6 +79,7 @@ def show_all_profiles(request):
         )
 
 @api_view(['GET'])
+@permission_classes([IsAuthenticated])
 @csrf_exempt
 def show_profile(request,id):
     if request.method=='GET':
@@ -56,15 +98,17 @@ def show_profile(request,id):
 
 
 @api_view(['POST'])
+@permission_classes([IsAuthenticated])
 @csrf_exempt
 def add_blog(request):
     if request.method=='POST':
-        user_id=1
-        category_id=1
-        user=User.objects.get(id=user_id)
+        user_id=request.user
+        print(user_id)
+        category_id=3
+        # user=User.objects.get(id=user_id)
         category=Category.objects.get(id=category_id)
         blog=Blog()
-        blog.user=user
+        blog.user=user_id
         blog.category=category
         blog.title=request.POST['title']
         blog.body=request.POST['body']
@@ -73,6 +117,7 @@ def add_blog(request):
              request.POST['title']+request.POST['body']+request.POST['tags_for_seo']
             )
         blog.tags_for_seo=request.POST['tags_for_seo']
+        blog.tags_embedding=give_embedding(request.POST['tags_for_seo'].replace("#",""))
         blog.save()
         print("Blog saved successfully")
         return JsonResponse(
@@ -113,23 +158,26 @@ def show_categories(request):
 @permission_classes([IsAuthenticated])
 # @authentication_classes([JWTAuthentication])
 def show_blog(request,id):
-    try:
-        user = request.user
-        print(user.username)
-        blog=Blog.objects.get(id=id)
-        print(blog)
-        blog_serializer=BlogSerializer(blog)
-        return JsonResponse(
-            data=blog_serializer.data,
-            safe=False,
-            status=200
-            )
-    except:
-        return JsonResponse(
-            {'mssg':f'No such data for {id}'},
-            safe=False,
-            status=status.HTTP_404_NOT_FOUND
-            )
+    # try:
+    user = request.user
+    print(user.username)
+    blog=Blog.objects.get(id=id)
+    print(recommend_blogs(blog))
+    # print(blog)
+    blog_serializer=BlogSerializer(blog)
+    return JsonResponse(
+        data=blog_serializer.data,
+        safe=False,
+        status=200
+        )
+    # except:
+    #     return JsonResponse(
+    #         {
+    #             'mssg':f'No such data for {id}'
+    #         },
+    #         safe=False,
+    #         status=status.HTTP_404_NOT_FOUND
+    #         )
 
 
 

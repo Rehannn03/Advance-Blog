@@ -73,6 +73,7 @@ class Blog(models.Model):
     embedding=models.TextField()
     summary=models.TextField(null=True,blank=True)
     tags_for_seo=models.CharField(max_length=200,blank=True,null=True)
+    tags_embedding=models.TextField(null=True,blank=True)
     blog_pic = models.ImageField(
     upload_to ='blog_pics/',
         # default='default_profile_pic.jpg',
@@ -103,7 +104,9 @@ class Draft(models.Model):
     
 class Comment(models.Model):
     text=models.CharField(max_length=500,blank=True,null=True)
+    user=models.ForeignKey(User,on_delete=models.CASCADE)
     blog=models.ForeignKey(Blog,on_delete=models.CASCADE)
+    comment_time=models.DateTimeField(auto_now_add=True)
 
 
 # class Tag(models.Model):

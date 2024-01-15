@@ -141,6 +141,8 @@ class BlogSerializer(serializers.ModelSerializer):
     user = UserSerializer(read_only=True)
     total_likes=serializers.SerializerMethodField()
     likes=serializers.SerializerMethodField()
+    comments=serializers.SerializerMethodField()
+    total_comments=serializers.SerializerMethodField()
     class Meta:
         model=Blog
         fields=[
@@ -154,7 +156,10 @@ class BlogSerializer(serializers.ModelSerializer):
             'published',
             # 'summary',
             'tags_for_seo',
-            'total_likes'
+            'total_likes',
+            'blog_pic',
+            'comments',
+            'total_comments'
         ]
         # fields='__all__'
         depth=1
@@ -167,5 +172,19 @@ class BlogSerializer(serializers.ModelSerializer):
             {'user_id':liker.id,'user_name':liker.user.username} for liker in blog.likes.all()
         ][:5]
     
+    def get_comments(self,blog):
+        return [
+            {
+            'user':comment.user.username,
+            'comment':comment.text,
+            'comment_time':comment.comment_time
+            }
+            for comment in blog.comment_set.all().order_by('-comment_time')[:5]
+            ]
+    
+    def get_total_comments(self,blog):
+        return blog.comment_set.count()
+    
+
 
         
