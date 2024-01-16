@@ -18,6 +18,8 @@ from pandas import *
 from sklearn.metrics.pairwise import cosine_similarity
 # Create your views here.
 
+###########################  Ml/Embedding functions ###################
+
 def give_embedding(text):
     text=f"""
         {text}
@@ -43,26 +45,34 @@ def recommend(target_embedding,query_dict):
         )[0][0]
         )
     similar_blog_df.sort_values('similarity',inplace=True,ascending=False)
-    return list(similar_blog_df.id)[1:]
+    return list(similar_blog_df.id)[1:15]
 
 
 def recommend_blogs(blog):
     target=blog.__dict__['embedding']
     target_embedding=convert_to_numpy(target)
     print(type(target_embedding))
-
+    
     similar_blogs=json.dumps(
         list(
-            Blog.objects.filter(category=blog.category).values('id','embedding')
+            # Blog.objects.filter(category=blog.category).values('id','embedding')
+            Blog.objects.all().values('id','embedding')
             )
         )
     # print(similar_blogs)
     
-    return recommend(target_embedding,similar_blogs)
+    ids= recommend(target_embedding,similar_blogs)
+    print(ids)
+    blogs=Blog.objects.filter(id__in=ids)
+    recommended_blogs=sorted(
+        blogs,
+        key=lambda x : ids.index(x.id)
+    )
+    return recommended_blogs
 
-    
-
-
+############################################################################
+ 
+############################## Profile Views ##############################
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 @csrf_exempt
@@ -95,7 +105,9 @@ def show_profile(request,id):
             status=status.HTTP_200_OK
         )
 
+##############################################################################
 
+###################### Blog Views #############################################
 
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
@@ -158,27 +170,31 @@ def show_categories(request):
 @permission_classes([IsAuthenticated])
 # @authentication_classes([JWTAuthentication])
 def show_blog(request,id):
-    # try:
-    user = request.user
-    print(user.username)
-    blog=Blog.objects.get(id=id)
-    print(recommend_blogs(blog))
-    # print(blog)
-    blog_serializer=BlogSerializer(blog)
-    return JsonResponse(
-        data=blog_serializer.data,
-        safe=False,
-        status=200
-        )
-    # except:
-    #     return JsonResponse(
-    #         {
-    #             'mssg':f'No such data for {id}'
-    #         },
-    #         safe=False,
-    #         status=status.HTTP_404_NOT_FOUND
-    #         )
+    try:
+        user = request.user
+        print(user.username)
+        blog=Blog.objects.get(id=id)
+        recommended_blogs=recommend_blogs(blog)
+        blog_serializer=BlogSerializer(blog)
+        recommeded_serializer=AllBlogSerializer(recommended_blogs,many=True)
+        return JsonResponse(
+            data={
+                'blog':blog_serializer.data,
+                'recommendations_by_engine':recommeded_serializer.data
+            },
+            safe=False,
+            status=200
+            )
+    except:
+        return JsonResponse(
+            {
+                'mssg':f'No such data for {id}'
+            },
+            safe=False,
+            status=status.HTTP_404_NOT_FOUND
+            )
 
+##############################################################################
 
 
 
@@ -283,10 +299,24 @@ def register_user(request):
             )
     
 #############################################################################################
-
+import math as m
 @api_view(['GET'])
 def home(request):
     user=request.user
     if user.is_authenticated:
+        activity=[1,2,2,1,3,2,1,10,1,1]
+
+        avg_act=sum(activity)/10
+        blogs=Blog.objects.filter(
+            category__id__in= [      m.ceil(avg_act),m.floor(avg_act)        ]
+            ).order_by('-created_at')[:20]
         print("======")
-    return JsonResponse({'mssg':'done'})
+        serializer=AllBlogSerializer(blogs,many=True)
+    return JsonResponse(
+        {
+            'mssg':f'{avg_act}',
+            'blogs_by_activity':serializer.data
+        },
+            safe=False,
+            status=200
+        )

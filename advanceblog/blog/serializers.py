@@ -187,4 +187,29 @@ class BlogSerializer(serializers.ModelSerializer):
     
 
 
-        
+class AllBlogSerializer(serializers.ModelSerializer):
+    user = UserSerializer(read_only=True)
+    total_likes=serializers.SerializerMethodField()
+    # likes=serializers.SerializerMethodField()
+    # comments=serializers.SerializerMethodField()
+    total_comments=serializers.SerializerMethodField()
+
+    class Meta:
+        model=Blog
+        fields=[
+            'title',
+            'body',
+            'user',
+            'category',
+            'total_likes',
+            'total_comments',
+            'created_at',
+            'blog_pic'
+
+        ]
+
+    def get_total_likes(self,blog):
+        return blog.likes.count()
+
+    def get_total_comments(self,blog):
+        return blog.comment_set.count()
