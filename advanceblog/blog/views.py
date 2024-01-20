@@ -148,6 +148,7 @@ def add_blog(request):
         )
     
 @api_view(['GET'])
+@permission_classes([IsAuthenticated])
 def show_categories(request):
     if request.method=='GET':
         cats=Category.objects.all()
@@ -193,6 +194,167 @@ def show_blog(request,id):
             safe=False,
             status=status.HTTP_404_NOT_FOUND
             )
+
+@api_view(['GET'])    
+# @permission_classes([IsAuthenticated])
+def show_blogs_based_on_category(request,cat_name):
+    user=request.user
+    print(user)
+    # try:
+    print(request.session)
+    if user.is_authenticated:
+        return JsonResponse(
+            # data=serializer.data,
+            data={'mssg':None},
+            safe=False,
+            status=status.HTTP_204_NO_CONTENT
+        )
+    else:
+        category_blogs=Blog.objects.filter(
+            category__name=cat_name,
+            published=True
+            
+        ).order_by(
+            '-created_at'
+        )
+        serializer=AllBlogSerializer(category_blogs,many=True)
+        return JsonResponse(
+            data=serializer.data,
+            safe=False,
+            status=200
+        )
+    # except:
+    #     return JsonResponse(
+    #             data={'mssg':None},
+    #             safe=False,
+    #             status=status.HTTP_204_NO_CONTENT
+    #         )
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+@csrf_exempt
+def like_blog(request):
+    # get the blog from the request part
+    id=request.POST['id']
+    blog=Blog.objects.filter(id=id).first()
+    user=request.user
+    profile=Profile.objects.get(
+        user=user
+    )
+    if profile not in blog.likes.all():
+        blog.likes.add(
+            profile
+        )
+        blog.save()
+        print("like added")
+        return JsonResponse(
+            data={
+                'message':f'Like added to {blog.title} successfully'
+            },
+            safe=False,
+            status=status.HTTP_201_CREATED
+        )
+    else:
+        return JsonResponse(
+            data={'message':f'You have already liked {blog.title}'},
+            status=status.HTTP_208_ALREADY_REPORTED
+        )
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+@csrf_exempt
+def add_comment(request):
+    user=request.user
+    blog_id=request.POST['blog_id']
+    comment_text=request.POST['comment']
+    comment=Comment.objects.create(
+        user=user,
+        text=comment_text,
+        blog=Blog.objects.get(id=blog_id)
+    )
+    comment.save()
+    return JsonResponse(
+        data={'message':'Commment added successfully....'},
+        safe=False,
+        status=201
+
+    )
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+@csrf_exempt
+def add_to_favourite(request):
+    user=request.user
+    blog_id=request.POST['blog_id']
+
+    fav_blog,created=Favourite.objects.get_or_create(
+            user=user,
+            blog=Blog.objects.get(id=blog_id)
+            )
+    if created:
+        fav_blog.save()
+        return JsonResponse(
+            data={
+                'message':'blog added to Favourites...'
+            },
+            status=201
+        )
+    else:
+        return JsonResponse(
+            data={
+                'message':'blog already in Favourites...'
+            },
+            status=status.HTTP_200_OK
+        )
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+@csrf_exempt
+def remove_from_favourite(request):
+    user=request.user
+    blog_id=request.POST['blog_id']
+
+    fav_blog=Favourite.objects.get(
+            user=user,
+            blog__id=blog_id
+            )
+ 
+    fav_blog.delete()
+    return JsonResponse(
+        data={
+            'message':'blog removed from Favourites...'
+        },
+        status=200
+        )
+   
+
+
+
+    # favourite_blog=Favourite.objects.create(
+    #         user=user,
+    #         blog=Blog.objects.get(id=blog_id)
+    # )
+    # favourite_blog.save()
+    return JsonResponse(
+        data={
+            'message':'blog added to Favourites...'
+        },
+        status=201
+    )
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def get_favourites(request):
+    user=request.user
+    user_favs=user.favourite_set.all().order_by('-added_at')
+    serializer=FavouriteSerializer(user_favs,many=True)
+    return JsonResponse(
+        serializer.data,
+        safe=False
+    )
+
 
 ##############################################################################
 
@@ -266,7 +428,7 @@ def register_user(request):
                         'status':1,
                         'access_token':str(access)
                         },
-                        status=200
+                        status=201
                     )
 
             else:
@@ -277,7 +439,7 @@ def register_user(request):
                         'status':1,
                         'access_token':str(access)
                     },
-                    status=200
+                    status=201
                 )
 
         except:

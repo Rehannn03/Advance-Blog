@@ -87,13 +87,14 @@ class Blog(models.Model):
     def total_likes(self):
         return str(self.likes.count())
     
-
+from datetime import datetime
 class Favourite(models.Model):
     blog=models.ForeignKey(Blog,on_delete=models.CASCADE)
     user=models.ForeignKey(User,on_delete=models.CASCADE)
+    added_at=models.DateTimeField(auto_now_add=True)
 
-    def __str__(self) -> str:
-        return self.user.username
+#     def __str__(self) -> str:
+#         return self.user.username+"  "+self.blog.title[:10]
 
 class Draft(models.Model):
     blog=models.ForeignKey(Blog,on_delete=models.CASCADE)

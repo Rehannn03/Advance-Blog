@@ -127,7 +127,12 @@ class ProfileSerializer(serializers.ModelSerializer):
     
     def get_blogs(self,profile):
         return list(
-            profile.user.blog_set.all().values('id','title','summary')
+            profile.user.blog_set.filter(published=True).order_by(
+                '-created_at'
+                ).values(
+                    'id',
+                    'title'
+                    )
         )
 
 
@@ -146,6 +151,7 @@ class BlogSerializer(serializers.ModelSerializer):
     class Meta:
         model=Blog
         fields=[
+            'id',
             'title',
             'body',
             'likes',
@@ -193,10 +199,12 @@ class AllBlogSerializer(serializers.ModelSerializer):
     # likes=serializers.SerializerMethodField()
     # comments=serializers.SerializerMethodField()
     total_comments=serializers.SerializerMethodField()
+    body=serializers.SerializerMethodField()
 
     class Meta:
         model=Blog
         fields=[
+            'id',
             'title',
             'body',
             'user',
@@ -213,3 +221,18 @@ class AllBlogSerializer(serializers.ModelSerializer):
 
     def get_total_comments(self,blog):
         return blog.comment_set.count()
+    
+    def get_body(self,blog):
+        return  blog.body[:50]
+    
+
+class FavouriteSerializer(serializers.ModelSerializer):
+    user = UserSerializer(read_only=True)
+    blog=AllBlogSerializer()
+    class Meta:
+        model=Favourite
+        fields=[
+            'id',
+            'user',
+            'blog'
+        ]

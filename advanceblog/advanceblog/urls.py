@@ -27,9 +27,21 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('showprofiles',show_all_profiles,name='showprofiles'),
     path('showprofile/<int:id>',show_profile,name='show_profile'),
+
+
+
     path('add_blog',add_blog,name='add_blog'),
     path('show_categories',show_categories,name='show_categories'),
     path('show_blog/<int:id>',show_blog,name='show_blog'),
+    path('like_blog',like_blog,name='like_blog'),
+    path('add_comment',add_comment,name='add_comment'),
+
+    path('add_to_favourite',add_to_favourite,name='add_to_favourite'),
+    path('remove_from_favourite',remove_from_favourite,name='remove_from_favourite'),
+    path('get_favourites',get_favourites,name='get_favourites'),
+
+
+    path('category/<str:cat_name>',show_blogs_based_on_category,name='catgory_blog'),
 
 
 
