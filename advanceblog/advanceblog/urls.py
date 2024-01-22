@@ -36,6 +36,13 @@ urlpatterns = [
     path('like_blog',like_blog,name='like_blog'),
     path('add_comment',add_comment,name='add_comment'),
 
+    path('add_to_draft',add_to_draft,name='add_to_draft'),
+    path('view_draft',view_draft,name='view_draft'),
+    path('publish_draft',publish_draft,name='publish_draft'),
+    path('remove_draft',remove_draft,name='remove_draft'),
+
+
+
     path('add_to_favourite',add_to_favourite,name='add_to_favourite'),
     path('remove_from_favourite',remove_from_favourite,name='remove_from_favourite'),
     path('get_favourites',get_favourites,name='get_favourites'),
@@ -47,6 +54,7 @@ urlpatterns = [
 
 
     path('login',login_user,name='login_user'),
+    path('register_user',register_user,name='register_user'),
     path('home',home,name='home'),
 
 

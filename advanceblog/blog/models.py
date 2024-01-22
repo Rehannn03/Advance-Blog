@@ -11,7 +11,12 @@ class Profile(models.Model):
     age=models.CharField(max_length=4,blank=True,null=True)
     mobile=models.CharField(max_length=20,null=True,blank=True)
     bio=models.TextField(null=True,blank=True)
-    # profile_pic=models.ImageField()
+    profile_pic=models.ImageField(
+        'profile_pics/',
+        default='static/default_profile_pic.jpg',
+        # null=True,
+        # blank=True
+    )
     created_at=models.DateField(auto_now_add=True)
     follows=models.ManyToManyField(
         'self',
@@ -93,8 +98,8 @@ class Favourite(models.Model):
     user=models.ForeignKey(User,on_delete=models.CASCADE)
     added_at=models.DateTimeField(auto_now_add=True)
 
-#     def __str__(self) -> str:
-#         return self.user.username+"  "+self.blog.title[:10]
+    def __str__(self) -> str:
+        return self.user.username+"  "+self.blog.title[:10]
 
 class Draft(models.Model):
     blog=models.ForeignKey(Blog,on_delete=models.CASCADE)

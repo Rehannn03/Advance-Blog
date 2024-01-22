@@ -24,6 +24,9 @@ def give_embedding(text):
     text=f"""
         {text}
         """
+    text=re.sub("[\n\.,:!\?&#@\*%]"," ",text)
+    text=re.sub(" +"," ",text)
+
     embedding=BlogConfig.embedding_model.encode(text)
     return f"{embedding}"
 
@@ -136,7 +139,7 @@ def add_blog(request):
             data={
                 'mssg':'Blog Posted Successfully...'
             },
-            status=200
+            status=201
         )
         
     else:
@@ -356,12 +359,101 @@ def get_favourites(request):
     )
 
 
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+@csrf_exempt
+def add_to_draft(request):
+    user=request.user
+    # blog_id=request.POST['blog_id']
+    category_id=5
+    # user=User.objects.get(id=user_id)
+    category=Category.objects.get(id=category_id)
+    blog=Blog()
+    blog.user=user
+    blog.category=category
+    blog.title=request.POST['title']
+    blog.body=request.POST['body']
+    blog.published=False
+    blog.embedding=give_embedding(
+            request.POST['title']+request.POST['body']+request.POST['tags_for_seo'].replace("#","")
+        )
+    blog.tags_for_seo=request.POST['tags_for_seo']
+    blog.tags_embedding=give_embedding(request.POST['tags_for_seo'].replace("#",""))
+    blog.save()
+    drafted_blog=Draft()
+    drafted_blog.blog=blog
+    drafted_blog.user=user
+    drafted_blog.save()
+    print("Blog saved to draft successfully.....")
+    return JsonResponse(
+        data={
+            'mssg':'Blog Saved to Draft Successfully...'
+        },
+        status=201
+    )
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])        
+def view_draft(request):
+    user=request.user
+    print(user)
+    drafts=Draft.objects.filter(user=user)
+    serializer=DraftSerializer(drafts,many=True)
+    print(serializer.data)
+    return JsonResponse(
+        data={
+            'drafts':serializer.data,
+            'total_drafts':len(drafts)
+        },
+        safe=False,
+        status=200
+    )
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+@csrf_exempt
+def publish_draft(request):
+    draft_id=request.POST['draft_id']
+    draft=Draft.objects.get(id=draft_id)
+    draft.blog.published=True
+    draft.blog.save()
+    print(draft.blog.published)
+    draft.delete()
+    return JsonResponse(
+        
+        {
+            'mssg':'Draft published successfulyy....'
+            },
+            status=200
+        )
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+@csrf_exempt
+def remove_draft(request):
+    draft_id=request.POST['draft_id']
+    draft=Draft.objects.get(id=draft_id)
+    draft.blog.delete()
+    draft.delete()
+    return JsonResponse(
+        {
+            'mssg':'Draft blog deleted successfully.......'
+            },
+        status=200
+        )
+
+
+
+
 ##############################################################################
 
 
 
 #################################  Authentication Views #####################################
 @api_view(['POST'])
+@csrf_exempt
 def login_user(request):
     username=request.POST['uname']
     password=request.POST['password']
@@ -382,17 +474,18 @@ def login_user(request):
 
 
 @api_view(['POST'])
+@csrf_exempt
 def register_user(request):
     username=request.POST['uname']
     password1=request.POST['password1']
     password2=request.POST['password2']
-    if password1!=password2:
+    if password1==password2:
         # if both passwords dont match
         name=request.POST['name']
         age=request.POST['age']
         mobile=request.POST['mobile']
         email=request.POST['email']
-        if bio in request.POST:
+        if 'bio' in request.POST:
             bio=request.POST['bio']
         else:
             bio=None
@@ -420,6 +513,15 @@ def register_user(request):
             if request.FILES:
                 if 'profile_pic' in request.FILES:
                     profile.profile_pic=request.FILES['profile_pic']
+                    profile.save()
+                    return JsonResponse(
+                        data={
+                        'mssg':"Profile created Successfully...",
+                        'status':1,
+                        'access_token':str(access)
+                        },
+                        status=201
+                    )
                 else:
                     profile.save()
                     return JsonResponse(

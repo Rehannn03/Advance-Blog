@@ -236,3 +236,18 @@ class FavouriteSerializer(serializers.ModelSerializer):
             'user',
             'blog'
         ]
+
+class DraftSerializer(serializers.ModelSerializer):
+    user = UserSerializer(read_only=True)
+    blog=AllBlogSerializer()
+    # total_drats=serializers.SerializerMethodField()
+    class Meta:
+        model=Favourite
+        fields=[
+            'id',
+            'user',
+            'blog'
+        ]
+        depth=1
+    
+    # def get_total_drafts(self,)
