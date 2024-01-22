@@ -108,6 +108,39 @@ def show_profile(request,id):
             status=status.HTTP_200_OK
         )
 
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+@csrf_exempt
+def follow_user(request):
+    '''
+    one user following another user view
+    '''
+    try:
+        user=Profile.objects.get(user=request.user)
+        to_follow_id=request.POST['to_follow_id']
+        to_follow=Profile.objects.get(
+            id=to_follow_id
+        )
+        print(to_follow.user.id)
+        user.follows.add(to_follow)
+        return JsonResponse(
+            data={
+                'message':f'You followed {to_follow.user.username} successfully....'
+            },
+            status=201,
+            safe=False
+        )
+    except:
+          return JsonResponse(
+            data={
+                'message':f'OOP"s error occurred.........'
+            },
+            status=400,
+            safe=False
+        )
+    
+
+
 ##############################################################################
 
 ###################### Blog Views #############################################
@@ -251,9 +284,14 @@ def like_blog(request):
         )
         blog.save()
         print("like added")
+        other_blogs=Blog.objects.filter(
+            user=blog.user
+        ).order_by("-created_at")[:5]
+        serializer=AllBlogSerializer(other_blogs,many=True)
         return JsonResponse(
             data={
-                'message':f'Like added to {blog.title} successfully'
+                'message':f'Like added to {blog.title} successfully',
+                'other_blogs':serializer.data
             },
             safe=False,
             status=status.HTTP_201_CREATED
@@ -359,6 +397,8 @@ def get_favourites(request):
     )
 
 
+
+######################################## Draft Views ##################
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 @csrf_exempt
@@ -444,7 +484,7 @@ def remove_draft(request):
         status=200
         )
 
-
+#######################################################################################
 
 
 ##############################################################################

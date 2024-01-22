@@ -62,7 +62,8 @@ class Blog(models.Model):
     likes=models.ManyToManyField(
 
         Profile,
-        blank=True
+        blank=True,
+        # related_name
     )
     # image=img
     user=models.ForeignKey(User,

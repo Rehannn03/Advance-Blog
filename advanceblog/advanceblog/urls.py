@@ -26,6 +26,7 @@ from blog.views import *
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('showprofiles',show_all_profiles,name='showprofiles'),
+    path('follow_user',follow_user,name='follow_user'),
     path('showprofile/<int:id>',show_profile,name='show_profile'),
 
 
