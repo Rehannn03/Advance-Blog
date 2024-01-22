@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { navLinks } from "../constants";
+import { navLinks } from "../../constants";
 
-export const Navbar = () => {
+
+export function Navbar() {
   const [active, setActive] = useState("");
   const [toggle, setToggle] = useState(false);
   return (
@@ -38,7 +39,12 @@ export const Navbar = () => {
                 setActive(link.title);
               }}
             >
-              <a href={`#${link.id}`}>{link.title}</a>
+              <Link
+              to={`${link.id}`}
+              >
+                {link.title}
+              </Link>
+             
             </li>
           ))}
         </ul>
@@ -80,3 +86,4 @@ export const Navbar = () => {
     </div>
   );
 };
+

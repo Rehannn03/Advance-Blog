@@ -1,20 +1,26 @@
-import { BrowserRouter,Route } from "react-router-dom"
-import {Navbar} from "./components/Navbar"
-import Hero from "./components/Hero"
-import { Login } from "./components/Login"
+import { Login } from "./Pages/Login/Login.jsx"
+import Home from "./Pages/Home/Home.jsx"
+import { Outlet } from "react-router-dom"
+import {Navbar} from "./components/Navbar/Navbar.jsx"
+
 
 function App() {
   return (
-    <BrowserRouter>
-      
-      <div className="bg bg-heroBG bg-cover h-screen w-screen">
-        <Navbar />
-        <Hero />
-      </div>
+    
+      <>
+        <div>
+          <Navbar/>
+          <Outlet/>
+        </div>
+      </>
+      // <div className="bg bg-heroBG bg-cover h-screen w-screen">
+      //   <Home/>
+        
+      // </div>
         
 
       
-    </BrowserRouter>
+    
   )
 }
 

@@ -1,6 +1,6 @@
 const Hero = () => {
   return (
-    <div className="flex flex-col">
+    <div className="flex flex-col bg bg-heroBG bg-cover h-screen w-screen">
       {/* Text and button ??? */}
       <div className="w-[600px] h-[171px]">
         <p className="relative w-[600px] h-[171px] top-[150px] left-[180px] [font-family:'Roboto-Regular',Helvetica] font-normal text-transparent text-[64px] tracking-[0] leading-[normal]">
