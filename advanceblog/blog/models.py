@@ -63,7 +63,7 @@ class Blog(models.Model):
 
         Profile,
         blank=True,
-        # related_name
+        related_name="user_likes"
     )
     # image=img
     user=models.ForeignKey(User,

@@ -27,7 +27,7 @@ SECRET_KEY = 'django-insecure-9=5p%jvnj10gk^8@33hj*z(9crk4$=w^3yri1er15eapb)a+5^
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['*']
 
 
 # Application definition
@@ -42,7 +42,7 @@ INSTALLED_APPS = [
     'blog',
     'rest_framework',
     'rest_framework_simplejwt',
-    
+    'corsheaders',
 ]
 
 MIDDLEWARE = [
@@ -53,6 +53,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
 ]
 
 ROOT_URLCONF = 'advanceblog.urls'
@@ -143,6 +144,8 @@ REST_FRAMEWORK = {
     )
     
 }
+
+CORS_ORIGIN_ALLOW_ALL = True
 
 
 from datetime import timedelta

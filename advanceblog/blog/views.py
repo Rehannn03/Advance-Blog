@@ -36,8 +36,9 @@ def convert_to_numpy(string_embedding):
         dtype=float
         )
 
-def recommend(target_embedding,query_dict):
+def recommend(target_embedding,query_dict,for_home=True):
     similar_blog_df=read_json(query_dict)
+
     similar_blog_df['similarity']=similar_blog_df.embedding.apply(
         lambda x :cosine_similarity(
             [target_embedding],
@@ -48,6 +49,9 @@ def recommend(target_embedding,query_dict):
         )[0][0]
         )
     similar_blog_df.sort_values('similarity',inplace=True,ascending=False)
+    print(similar_blog_df)
+    if for_home:
+        return list(similar_blog_df.id)[:15]
     return list(similar_blog_df.id)[1:15]
 
 
@@ -64,7 +68,7 @@ def recommend_blogs(blog):
         )
     # print(similar_blogs)
     
-    ids= recommend(target_embedding,similar_blogs)
+    ids= recommend(target_embedding,similar_blogs,for_home=False)
     print(ids)
     blogs=Blog.objects.filter(id__in=ids)
     recommended_blogs=sorted(
@@ -144,7 +148,8 @@ def follow_user(request):
 ##############################################################################
 
 ###################### Blog Views #############################################
-
+from wordcloud import WordCloud
+import matplotlib.pyplot as plt
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 @csrf_exempt
@@ -152,7 +157,7 @@ def add_blog(request):
     if request.method=='POST':
         user_id=request.user
         print(user_id)
-        category_id=3
+        category_id=1
         # user=User.objects.get(id=user_id)
         category=Category.objects.get(id=category_id)
         blog=Blog()
@@ -161,11 +166,18 @@ def add_blog(request):
         blog.title=request.POST['title']
         blog.body=request.POST['body']
         blog.published=bool(request.POST['published'])
+        text=request.POST['title']+request.POST['body']+request.POST['tags_for_seo']
         blog.embedding=give_embedding(
-             request.POST['title']+request.POST['body']+request.POST['tags_for_seo']
+            text
             )
         blog.tags_for_seo=request.POST['tags_for_seo']
         blog.tags_embedding=give_embedding(request.POST['tags_for_seo'].replace("#",""))
+        wordcloud = WordCloud().generate(text)
+
+        # Display the generated image:
+        plt.imshow(wordcloud, interpolation='bilinear')
+        plt.axis("off")
+        plt.show()
         blog.save()
         print("Blog saved successfully")
         return JsonResponse(
@@ -607,20 +619,76 @@ import math as m
 @api_view(['GET'])
 def home(request):
     user=request.user
+    print(user)
     if user.is_authenticated:
-        activity=[1,2,2,1,3,2,1,10,1,1]
+        # give user the blogs based on the activity which will be stored in local storage using react
+        # 2 give user the blogs based on the likes
+        profile=Profile.objects.get(user=user)
+        # get the profile , now based on the profile get the likes
+        total_likes_by_user=profile.user_likes.count()
+        # print(total_likes_by_user)
+        if total_likes_by_user==1:
+            return JsonResponse(
+            {
+                'msg':'not yet done'
+            },
+            status=200
+            )
+        else:
+            liked_blogs=json.dumps(
+                list(profile.user_likes.all().values('id','embedding'))
+                )
+            # print(liked_blogs)
+            blogs=recommend_blogs_for_home(liked_blogs,profile)
+            by_liked=AllBlogSerializer(blogs,many=True).data
+         
+            return JsonResponse(
+            {
+                'msg':'not yet done',
+                'by_liked':by_liked
+            },
+            status=200
+            )
 
-        avg_act=sum(activity)/10
-        blogs=Blog.objects.filter(
-            category__id__in= [      m.ceil(avg_act),m.floor(avg_act)        ]
-            ).order_by('-created_at')[:20]
-        print("======")
-        serializer=AllBlogSerializer(blogs,many=True)
-    return JsonResponse(
-        {
-            'mssg':f'{avg_act}',
-            'blogs_by_activity':serializer.data
-        },
-            safe=False,
+    else:
+        # user is not authenticated give him the best blogs
+        return JsonResponse(
+            {
+                'msg':'not yet done'
+            },
             status=200
         )
+
+
+def recommend_blogs_for_home(query_dict,profile):
+    df=read_json(query_dict)
+    df['numpy_embedding']=df.embedding.apply(
+        lambda x : np.array(
+            re.sub(" +"," ",(re.sub("[\[\]]"," ",x))).split(),
+        dtype=float
+        )
+    )
+
+
+    
+    target_vector=np.stack(df.numpy_embedding.values).mean(0)
+    blogs=json.dumps(
+        list(
+        Blog.objects.exclude(id__in=df.id.values).order_by("-created_at")[:20].values(
+            'id','embedding')
+            )
+                )
+    ids=recommend(target_vector,blogs)
+    blogs=Blog.objects.filter(id__in=ids)
+    recommended_blogs=sorted(
+        blogs,
+        key=lambda x : ids.index(x.id)
+    )
+    return recommended_blogs
+
+
+
+
+
+        
+    
