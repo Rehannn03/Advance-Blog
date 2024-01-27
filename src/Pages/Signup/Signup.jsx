@@ -24,7 +24,7 @@ function Signup() {
     formData.append('email',email)
     
     try {
-      await fetch('https://e557-103-220-42-156.ngrok-free.app/register_user',{
+      await fetch('https://4415-103-220-42-156.ngrok-free.app/register_user',{
         method:'POST',
         body:formData
       })

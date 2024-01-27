@@ -1,35 +1,43 @@
 import axios from "axios";
 import React, { useState } from "react";
-
+import { useNavigate } from "react-router-dom";
 export const Login = () => {
   const [uname, setUname] = useState("");
   const [psw, setPsw] = useState("");
-
+  const [login, setLogin] = useState(false);
   let submit = async (e) => {
     e.preventDefault();
     let formData = new FormData();
     formData.append("uname", uname);
     formData.append("password", psw);
-
+    const navigate=useNavigate()
     try {
-      await fetch("https://e557-103-220-42-156.ngrok-free.app/login", {
-        method: "POST",
-        body: formData,
-      })
+      const response = await fetch(
+        "https://4415-103-220-42-156.ngrok-free.app/login",
+        {
+          method: "POST",
+          body: formData,
+        }
+      )
         .then((res) => res.json())
         .then((data) => {
-          localStorage.setItem("token", data.access)
+          localStorage.setItem("token", data.access);
           console.log(data);
-          alert("Login Successful");
         })
-
         .catch((err) => console.log(err));
-
       setUname("");
       setPsw("");
+      if(response.status===200){
+        alert("Login Successful");
+        navigate('/user/add_blog')
+      }
+      if(response.status===401){
+        alert("Invalid Credentials")
+      }
     } catch (error) {
       console.log(error.message.data);
     }
+    
   };
 
   let forgotPassword = async (e) => {
@@ -91,7 +99,7 @@ export const Login = () => {
             >
               Forgot Password?
             </a>
-            <button className="px-7 py-2 mx-2 font-semibold text-white bg-purple-600 rounded ">
+            <button className="px-7 py-2 mx-2 font-semibold text-white bg-purple-600 rounded hover:bg-purple-400">
               Submit
             </button>
           </div>

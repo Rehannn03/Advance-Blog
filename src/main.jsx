@@ -7,18 +7,22 @@ import { Login } from './Pages/Login/Login.jsx'
 import Home from './Pages/Home/Home.jsx'
 import Error from './components/Error/Error.jsx'
 import Signup from './Pages/Signup/Signup.jsx'
-
+import AddBlog from './Pages/Add Blog/addBlog.jsx'
+import About from './Pages/About/About.jsx'
 const router = createBrowserRouter(
   createRoutesFromElements(
     <>
     
     <Route path='/' element={<App/>} >
       <Route path='' element={<Home/>} />
+      <Route path='about' element={<About/>} />
       <Route path='login' element={<Login/>} />
       <Route path='signup' element={<Signup/>} />
       <Route path='*' element={<Error/>} />
     </Route>
-    
+    <Route path='/user'>
+      <Route path='add_blog' element={<AddBlog/>}/>
+    </Route>
     </>
   )
 )
