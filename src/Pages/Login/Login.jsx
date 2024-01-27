@@ -4,43 +4,52 @@ import React, { useState } from "react";
 export const Login = () => {
   const [uname, setUname] = useState("");
   const [psw, setPsw] = useState("");
-  
-  let submit=async(e)=>{
-    e.preventDefault()
+
+  let submit = async (e) => {
+    e.preventDefault();
+    let formData = new FormData();
+    formData.append("uname", uname);
+    formData.append("password", psw);
 
     try {
-      axios.post('',{
-        uname:uname,
-        password:psw
+      await fetch("https://e557-103-220-42-156.ngrok-free.app/login", {
+        method: "POST",
+        body: formData,
       })
-      .then(res=>{
-        console.log(res)
-      })
-      alert("Login Successful")
-      setUname("")
-      setPsw("")
-    } catch (error) {
-      console.log(error)
-    }
-  }
+        .then((res) => res.json())
+        .then((data) => {
+          localStorage.setItem("token", data.access)
+          console.log(data);
+          alert("Login Successful");
+        })
 
-  let forgotPassword=async(e)=>{
-    e.preventDefault()
+        .catch((err) => console.log(err));
+
+      setUname("");
+      setPsw("");
+    } catch (error) {
+      console.log(error.message.data);
+    }
+  };
+
+  let forgotPassword = async (e) => {
+    e.preventDefault();
 
     try {
-      axios.post('',{
-        uname:uname
-      })
-      .then(res=>{
-        console.log(res)
-      })
-      alert("Password Reset Successful")
-      setUname("")
-      setPsw("")
+      axios
+        .post("", {
+          uname: uname,
+        })
+        .then((res) => {
+          console.log(res);
+        });
+      alert("Password Reset Successful");
+      setUname("");
+      setPsw("");
     } catch (error) {
-      console.log(error)
+      console.log(error);
     }
-  }
+  };
 
   return (
     <>
@@ -58,6 +67,7 @@ export const Login = () => {
               type="text"
               id="uname"
               name="uname"
+              value={uname}
               className="mt-1 mb-3 shadow-md border-none focus:ring-transparent rounded-sm bg-gray-100 text-black-500"
               onChange={(e) => setUname(e.target.value)}
             />
@@ -68,14 +78,19 @@ export const Login = () => {
               type="password"
               id="psw"
               name="psw"
+              value={psw}
               className="mt-1 mb-3 shadow-md border-none focus:ring-transparent rounded-sm bg-gray-100 text-black-500"
               onChange={(e) => setPsw(e.target.value)}
             />
           </div>
           <div className="text-center mt-3">
-            <a href="#" className="text-purple-600 font-medium px-2 hover:text-purple-400 " onClick={forgotPassword}>
+            <a
+              href="#"
+              className="text-purple-600 font-medium px-2 hover:text-purple-400 "
+              onClick={forgotPassword}
+            >
               Forgot Password?
-              </a>
+            </a>
             <button className="px-7 py-2 mx-2 font-semibold text-white bg-purple-600 rounded ">
               Submit
             </button>
@@ -84,7 +99,10 @@ export const Login = () => {
         <div>
           <p className="text-center mt-5 font-normal">
             Don't have an account?{" "}
-            <a href="/signup" className="text-purple-600 font-medium px-2 hover:text-purple-400 ">
+            <a
+              href="/signup"
+              className="text-purple-600 font-medium px-2 hover:text-purple-400 "
+            >
               Sign Up
             </a>
           </p>

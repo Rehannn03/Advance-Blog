@@ -1,6 +1,8 @@
 import React from 'react'
 import axios from 'axios'
 import { useState } from 'react'
+import { useNavigate } from 'react-router-dom';
+
 function Signup() {
     const [uname, setUname] = useState("");
     const [psw, setPsw] = useState("");
@@ -9,27 +11,35 @@ function Signup() {
     const [age, setAge] = useState("");
     const [mobile, setMobile] = useState("");
     const [email, setEmail] = useState("");
-
+    const navigate=useNavigate()
     let submit=async(e)=>{
     e.preventDefault()
-
-    await axios.post('',{
-        uname:uname,
-        password1:psw,
-        password2:cpsw,
-        name:name,
-        age:age,
-        mobile:mobile,
-        email:email
-        })
-        .then(res=>{
-        console.log(res)
-        }
-        )
-        .catch(err=>{
-            console.log(err)
-        })
+    let formData=new FormData()
+    formData.append('uname',uname)
+    formData.append('password1',psw)
+    formData.append('password2',cpsw)
+    formData.append('name',name)
+    formData.append('age',age)
+    formData.append('mobile',mobile)
+    formData.append('email',email)
+    
+    try {
+      await fetch('https://e557-103-220-42-156.ngrok-free.app/register_user',{
+        method:'POST',
+        body:formData
+      })
+      .then(res=>res.json())
+      .then(data=>{
+        localStorage.setItem('token',data.access_token)
+        console.log(data.access_token) 
+        console.log(data)
+      alert("Signup Successful")})
+      
+    } catch (error) {
+      console.log(error.message.data)
     }
+  }
+
 
   return (
     <div className="container  w-80 mx-auto my-20 px-6 py-6 shadow ">
@@ -133,6 +143,7 @@ function Signup() {
         
       </div>
   )
+  
 }
 
 export default Signup
