@@ -40,24 +40,24 @@ export const Login = () => {
     
   };
 
-  let forgotPassword = async (e) => {
-    e.preventDefault();
+  // let forgotPassword = async (e) => {
+  //   e.preventDefault();
 
-    try {
-      axios
-        .post("", {
-          uname: uname,
-        })
-        .then((res) => {
-          console.log(res);
-        });
-      alert("Password Reset Successful");
-      setUname("");
-      setPsw("");
-    } catch (error) {
-      console.log(error);
-    }
-  };
+  //   try {
+  //     axios
+  //       .post("", {
+  //         uname: uname,
+  //       })
+  //       .then((res) => {
+  //         console.log(res);
+  //       });
+  //     alert("Password Reset Successful");
+  //     setUname("");
+  //     setPsw("");
+  //   } catch (error) {
+  //     console.log(error);
+  //   }
+  // };
 
   return (
     <>
@@ -95,7 +95,7 @@ export const Login = () => {
             <a
               href="#"
               className="text-purple-600 font-medium px-2 hover:text-purple-400 "
-              onClick={forgotPassword}
+              
             >
               Forgot Password?
             </a>
