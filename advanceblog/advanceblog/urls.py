@@ -56,7 +56,7 @@ urlpatterns = [
 
     path('login',login_user,name='login_user'),
     path('register_user',register_user,name='register_user'),
-    path('home',home,name='home'),
+    path('by_liked',for_home_by_liked,name='by_liked'),
 
 
 ]

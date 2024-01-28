@@ -16,6 +16,8 @@ import numpy as np
 import re
 from pandas import *
 from sklearn.metrics.pairwise import cosine_similarity
+from wordcloud import WordCloud
+from django.core.files import File
 # Create your views here.
 
 ###########################  Ml/Embedding functions ###################
@@ -148,8 +150,8 @@ def follow_user(request):
 ##############################################################################
 
 ###################### Blog Views #############################################
-from wordcloud import WordCloud
-import matplotlib.pyplot as plt
+import os
+
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 @csrf_exempt
@@ -166,19 +168,24 @@ def add_blog(request):
         blog.title=request.POST['title']
         blog.body=request.POST['body']
         blog.published=bool(request.POST['published'])
-        text=request.POST['title']+request.POST['body']+request.POST['tags_for_seo']
+        text=request.POST['title']+request.POST['body'][10:800]
         blog.embedding=give_embedding(
-            text
+            request.POST['title']+request.POST['body']+request.POST['tags_for_seo']
             )
         blog.tags_for_seo=request.POST['tags_for_seo']
         blog.tags_embedding=give_embedding(request.POST['tags_for_seo'].replace("#",""))
         wordcloud = WordCloud().generate(text)
+        file_path=f"{user_id.username}_{text[:5]}.png"
+        wordcloud.to_file(file_path)
+        f=File(open(file_path,"rb"))
+        print(f.name)
+        blog.blog_pic=f
+       
 
-        # Display the generated image:
-        plt.imshow(wordcloud, interpolation='bilinear')
-        plt.axis("off")
-        plt.show()
         blog.save()
+
+        f.close()
+        os.remove(file_path)
         print("Blog saved successfully")
         return JsonResponse(
             data={
@@ -532,7 +539,6 @@ def register_user(request):
     password1=request.POST['password1']
     password2=request.POST['password2']
     if password1==password2:
-        # if both passwords dont match
         name=request.POST['name']
         age=request.POST['age']
         mobile=request.POST['mobile']
@@ -616,8 +622,9 @@ def register_user(request):
     
 #############################################################################################
 import math as m
+from rest_framework.pagination import PageNumberPagination
 @api_view(['GET'])
-def home(request):
+def for_home_by_liked(request):
     user=request.user
     print(user)
     if user.is_authenticated:
@@ -627,7 +634,7 @@ def home(request):
         # get the profile , now based on the profile get the likes
         total_likes_by_user=profile.user_likes.count()
         # print(total_likes_by_user)
-        if total_likes_by_user==1:
+        if total_likes_by_user==0:
             return JsonResponse(
             {
                 'msg':'not yet done'
@@ -637,53 +644,65 @@ def home(request):
         else:
             liked_blogs=json.dumps(
                 list(profile.user_likes.all().values('id','embedding'))
-                )
-            # print(liked_blogs)
-            blogs=recommend_blogs_for_home(liked_blogs,profile)
-            by_liked=AllBlogSerializer(blogs,many=True).data
-         
-            return JsonResponse(
-            {
-                'msg':'not yet done',
-                'by_liked':by_liked
-            },
-            status=200
-            )
+                )  #get all liked blog and convert to json for giving to pandas
+
+            blogs=recommend_blogs_for_home(liked_blogs,profile) #call recommed function
+            by_liked=AllBlogSerializer(blogs,many=True).data  #serialize data
+            paginator = PageNumberPagination()  #create object for pagintion
+            paginator.page_size = 10  #set page_size
+            result_page = paginator.paginate_queryset(blogs, request) #paginate the queryset
+
+            by_liked=AllBlogSerializer(result_page,many=True).data #serialize 
+
+            return paginator.get_paginated_response(by_liked) #send response
 
     else:
-        # user is not authenticated give him the best blogs
-        return JsonResponse(
-            {
-                'msg':'not yet done'
-            },
-            status=200
-        )
+        blogs=Blog.objects.all().order_by("-created_at")
+        paginator=PageNumberPagination()
+        paginator.page_size=10
+        results=paginator.paginate_queryset(blogs,request)
+        serialized_results=AllBlogSerializer(results,many=True).data
+        return paginator.get_paginated_response(serialized_results)
+        # return JsonResponse(
+        #     serialized_results,
+        #     status=200,
+        #     safe=False
+        # )
 
 
 def recommend_blogs_for_home(query_dict,profile):
-    df=read_json(query_dict)
+    df=read_json(query_dict)  #convert json containing id and embedding to df
     df['numpy_embedding']=df.embedding.apply(
         lambda x : np.array(
             re.sub(" +"," ",(re.sub("[\[\]]"," ",x))).split(),
         dtype=float
         )
-    )
+    )  # convert embedding which is in float to numpy array
 
 
     
-    target_vector=np.stack(df.numpy_embedding.values).mean(0)
+    target_vector=np.stack(df.numpy_embedding.values).mean(0)  #get the mean of all liked vectors
     blogs=json.dumps(
         list(
-        Blog.objects.exclude(id__in=df.id.values).order_by("-created_at")[:20].values(
-            'id','embedding')
-            )
+        Blog.objects.exclude(
+                            id__in=list(df.id.values),
+                            user=profile.user
+                            ).order_by("-created_at").values(
+                'id',
+                'embedding'
                 )
-    ids=recommend(target_vector,blogs)
-    blogs=Blog.objects.filter(id__in=ids)
+            )
+            ) 
+    # 1. get the blogs which are not already liked and also not of the user
+    # 2. order them by date andconvert it to dictionary
+    # 3. convert the queryset to list
+    # 4. cnvert list to json
+    ids=recommend(target_vector,blogs) # this will apply cosine similarity and give ids 
+    blogs=Blog.objects.filter(id__in=ids) #get blogs of recommended ids
     recommended_blogs=sorted(
         blogs,
         key=lambda x : ids.index(x.id)
-    )
+    )  # sort by the index of similarity
     return recommended_blogs
 
 
