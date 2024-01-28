@@ -18,6 +18,8 @@ from pandas import *
 from sklearn.metrics.pairwise import cosine_similarity
 from wordcloud import WordCloud
 from django.core.files import File
+import math as m
+from rest_framework.pagination import PageNumberPagination
 # Create your views here.
 
 ###########################  Ml/Embedding functions ###################
@@ -621,8 +623,7 @@ def register_user(request):
             )
     
 #############################################################################################
-import math as m
-from rest_framework.pagination import PageNumberPagination
+
 @api_view(['GET'])
 def for_home_by_liked(request):
     user=request.user
@@ -635,6 +636,7 @@ def for_home_by_liked(request):
         total_likes_by_user=profile.user_likes.count()
         # print(total_likes_by_user)
         if total_likes_by_user==0:
+            # show by activity
             return JsonResponse(
             {
                 'msg':'not yet done'
@@ -680,13 +682,12 @@ def recommend_blogs_for_home(query_dict,profile):
     )  # convert embedding which is in float to numpy array
 
 
-    
+    print(df.id.values,"======== are the id of liked blogs")
     target_vector=np.stack(df.numpy_embedding.values).mean(0)  #get the mean of all liked vectors
     blogs=json.dumps(
         list(
         Blog.objects.exclude(
-                            id__in=list(df.id.values),
-                            user=profile.user
+                            id__in=df.id.values
                             ).order_by("-created_at").values(
                 'id',
                 'embedding'
@@ -698,12 +699,14 @@ def recommend_blogs_for_home(query_dict,profile):
     # 3. convert the queryset to list
     # 4. cnvert list to json
     ids=recommend(target_vector,blogs) # this will apply cosine similarity and give ids 
+    print(ids)
     blogs=Blog.objects.filter(id__in=ids) #get blogs of recommended ids
     recommended_blogs=sorted(
         blogs,
         key=lambda x : ids.index(x.id)
     )  # sort by the index of similarity
     return recommended_blogs
+
 
 
 
