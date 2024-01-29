@@ -57,6 +57,7 @@ urlpatterns = [
     path('login',login_user,name='login_user'),
     path('register_user',register_user,name='register_user'),
     path('by_liked',for_home_by_liked,name='by_liked'),
+    # path('setup_vector_db',setup_vector_db,name='setup_vector_db'),
 
 
 ]

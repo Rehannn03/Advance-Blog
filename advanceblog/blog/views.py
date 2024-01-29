@@ -21,7 +21,7 @@ from django.core.files import File
 import math as m
 from rest_framework.pagination import PageNumberPagination
 # Create your views here.
-
+chroma_collection=BlogConfig.chroma_collection
 ###########################  Ml/Embedding functions ###################
 
 def give_embedding(text):
@@ -665,6 +665,7 @@ def for_home_by_liked(request):
         results=paginator.paginate_queryset(blogs,request)
         serialized_results=AllBlogSerializer(results,many=True).data
         return paginator.get_paginated_response(serialized_results)
+    
         # return JsonResponse(
         #     serialized_results,
         #     status=200,
@@ -707,6 +708,29 @@ def recommend_blogs_for_home(query_dict,profile):
     )  # sort by the index of similarity
     return recommended_blogs
 
+# @api_view(['GET'])
+# def setup_vector_db(request):
+#     blogs=Blog.objects.all()
+#     for blog in blogs:
+#         text=blog.title+blog.body+blog.tags_for_seo
+#         category=blog.category.name
+#         id=str(blog.id)
+
+#         chroma_collection.add(
+#             documents=[text],
+#             ids=[id],
+#             metadatas=[{'category':category}]
+#         )
+
+#         print("=====\tdone\t=======")
+    
+#     return JsonResponse(
+#         {
+#             'mssg':'done'
+#         }
+    # )
+
+    
 
 
 

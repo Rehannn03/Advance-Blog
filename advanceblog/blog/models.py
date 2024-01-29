@@ -76,7 +76,7 @@ class Blog(models.Model):
     updated_at=models.DateTimeField(null=True,blank=True)
     published=models.BooleanField(default=False)
     # True if published else False for in Draft
-    embedding=models.TextField()
+    embedding=models.TextField(null=True,blank=True)
     summary=models.TextField(null=True,blank=True)
     tags_for_seo=models.CharField(max_length=200,blank=True,null=True)
     tags_embedding=models.TextField(null=True,blank=True)
