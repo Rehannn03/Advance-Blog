@@ -21,7 +21,10 @@ from django.core.files import File
 import math as m
 from rest_framework.pagination import PageNumberPagination
 # Create your views here.
+
+############################# for vector db ##################################
 chroma_collection=BlogConfig.chroma_collection
+##############################################################################
 ###########################  Ml/Embedding functions ###################
 
 def give_embedding(text):
@@ -105,11 +108,11 @@ def show_all_profiles(request):
 def show_profile(request,id):
     if request.method=='GET':
         profile=Profile.objects.filter(id=id).first()
-        print(profile.__dict__)
-        print(profile)
+        # print(profile.__dict__)
+        # print(profile)
         profile_serlizer=ProfileSerializer(profile)
         data=profile_serlizer.data
-        print(data)
+        # print(data)
         return JsonResponse(
             data=data,
             safe=False,
@@ -171,10 +174,11 @@ def add_blog(request):
         blog.body=request.POST['body']
         blog.published=bool(request.POST['published'])
         text=request.POST['title']+request.POST['body'][10:800]
-        blog.embedding=give_embedding(
-            request.POST['title']+request.POST['body']+request.POST['tags_for_seo']
-            )
-        blog.tags_for_seo=request.POST['tags_for_seo']
+        # blog.embedding=give_embedding(
+        #     request.POST['title']+request.POST['body']+request.POST['tags_for_seo']
+        #     )
+        # blog.tags_for_seo=request.POST['tags_for_seo']
+      
         blog.tags_embedding=give_embedding(request.POST['tags_for_seo'].replace("#",""))
         wordcloud = WordCloud().generate(text)
         file_path=f"{user_id.username}_{text[:5]}.png"
@@ -188,7 +192,12 @@ def add_blog(request):
 
         f.close()
         os.remove(file_path)
-        print("Blog saved successfully")
+        chroma_collection.add(
+            documents=[text],
+            ids=[blog.id],
+            metadatas=[{'category':category.name}]
+        )
+        print("Blog saved successfully in vector db and database")
         return JsonResponse(
             data={
                 'mssg':'Blog Posted Successfully...'
@@ -223,6 +232,7 @@ def show_categories(request):
             status=status.HTTP_405_METHOD_NOT_ALLOWED
         )
 
+from .vectordb import *
 
 @api_view(['GET'])    
 @permission_classes([IsAuthenticated])
@@ -231,9 +241,18 @@ def show_blog(request,id):
     try:
         user = request.user
         print(user.username)
+        print(id)
         blog=Blog.objects.get(id=id)
-        recommended_blogs=recommend_blogs(blog)
+        # recommended_blogs=recommend_blogs(blog)
+        # recommended_ids=
+        ids=recommend_from_vector_db(blog.id)
+       
         blog_serializer=BlogSerializer(blog)
+        recommended_blogs=Blog.objects.filter(id__in=ids[1:])
+        recommended_blogs=sorted(
+            recommended_blogs,
+            key=lambda x : ids.index(x.id)
+        )
         recommeded_serializer=AllBlogSerializer(recommended_blogs,many=True)
         return JsonResponse(
             data={
